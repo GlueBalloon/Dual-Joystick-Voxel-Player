@@ -51,6 +51,7 @@ function FPSWalkerViewer:longPressProgress()
 end
 
 function FPSWalkerViewer:update()
+    --[[
     if self.touchState == FPSWalkerViewer.BEGAN then
         if ElapsedTime - self.startTime >= self.longPressDuration then
             self.touchState = FPSWalkerViewer.LONG_PRESS
@@ -66,7 +67,7 @@ function FPSWalkerViewer:update()
     if self.touchState == FPSWalkerViewer.DRAGGING then
     --    if self.callbacks.dragging then self.callbacks.dragging(self.lastTouch) end
     end
-    --[[
+
     if self.enabled then  
         -- clamp vertical rotation between -90 and 90 degrees (no upside down view)
         self.rx = math.min(math.max(self.rx, -90), 90)
@@ -86,19 +87,29 @@ function FPSWalkerViewer:update()
 end
 
 function FPSWalkerViewer:scroll(gesture)
+--[[
     if gesture.state == BEGAN then 
         return true
     elseif gesture.state == MOVING then
         self.rx = self.rx - gesture.delta.y * self.sensitivity
         self.ry = self.ry - gesture.delta.x * self.sensitivity    
+    end ]]
     end
-end
-
-function FPSWalkerViewer:touched(touch)
     
+function FPSWalkerViewer:setJoysticksFrom(touch)
+    
+end
+    
+function FPSWalkerViewer:touched(touch)
+    local leftTouch, rightTouch
+    if touch.x<WIDTH/2 then 
+        leftTouch = true
+    else
+        rightTouch = true
+    end
     if touch.state==BEGAN then
         if #self.joysticks < 2 then
-            if touch.x<WIDTH/2 then 
+            if leftTouch then 
                 if #self.joysticks == 0 or (self.joysticks[1] and self.joysticks[1].type ~= "leftStick") then 
                     table.insert(self.joysticks,Joystick(touch.x,touch.y,touch.id,"leftStick")) 
                 end
@@ -119,6 +130,8 @@ function FPSWalkerViewer:touched(touch)
             end 
         end
     end    
+    
+    if leftTouch then return end
     
     if self.state == IDLE then
         if touch.state == BEGAN then

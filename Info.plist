@@ -11,9 +11,10 @@
 	<key>Buffer Order</key>
 	<array>
 		<string>Main</string>
-		<string>VoxelWalker</string>
+		<string>DJVPlayer</string>
 		<string>Joystick</string>
 		<string>FPSWalkerViewer</string>
+		<string>VoxelWalker</string>
 	</array>
 	<key>Dependencies</key>
 	<array>

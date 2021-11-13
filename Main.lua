@@ -1,4 +1,4 @@
--- Basic Player
+-- Dual-Joystick Voxel Player
 
 viewer.mode = OVERLAY
 
@@ -7,49 +7,67 @@ function setup()
     
     -- Setup camera and lighting
     scene.sun.rotation = quat.eulerAngles(25, 125, 0)
-    
-    -- Set the scenes ambient lighting
     scene.ambientColor = color(127, 127, 127, 255)   
     
-    allBlocks = blocks()    
-    
     -- Setup voxel terrain
+    allBlocks = blocks()    
     scene.voxels:resize(vec3(5,1,5))      
     scene.voxels.coordinates = vec3(0,0,0)
     
     -- Create ground out of grass
-    scene.voxels:fill("Redstone Ore")
+    scene.voxels:fill("Diamond Ore")
     scene.voxels:box(0,10,0,16*5,10,16*5)
     scene.voxels:fill("Dirt")
     scene.voxels:box(0,0,0,16*5,9,16*5)
-    player = voxelWalkerMaker(scene)
+    
+    --create player
+    player = djvPlayerMaker(scene)
 end
 
 function update(dt)
     scene:update(dt)
+    parameter.watch("player.entity.position")
+    parameter.watch("player.camera.position")
+    parameter.watch("player.viewer.position")
+    parameter.watch("player.viewer.rx")
+    parameter.watch("player.viewer.ry")
+    parameter.watch("player.viewer.eulerAngles")
+    parameter.watch("player.camera.entity.position")
+    parameter.watch("player.camera.entity.position")
 end
 
 function draw()
+    --update and draw scene and player
     update(DeltaTime)
     scene:draw()
     player:draw()
-    if #player.viewer.joysticks > 0 then
-        print(#player.viewer.joysticks..generateReportOfBothSticks(player))
+    
+    --change boolean to see live updates of simulated dpads
+    if false then
+        generateTwoStickDpadReport(player)
     end
 end
 
-function generateReportOfBothSticks(player)
-    local dpads = player:dpadStates()
-    local diags = player:dpadStates(true)
-    local returnString = 
-    "\n-------left stick:\n"
-    ..dpadTableReport(dpads.leftStick)
-    .."\n-------right stick:\n"
-    ..dpadTableReport(dpads.rightStick)
-    return returnString
+function generateTwoStickDpadReport(player)
+    if #player.viewer.joysticks > 0 then
+        local dpads = player:dpadStates()
+        local diags = player:dpadStates(true)
+        print(
+        "\n**no diagonals allowed: "..
+        "\n-------left stick:\n"
+        ..dpadTableReport(dpads.leftStick)
+        .."\n-------right stick:\n"
+        ..dpadTableReport(dpads.rightStick)
+        .."\n\n**diagonals allowed: "
+        .."\n-------left stick:\n"
+        ..dpadTableReport(diags.leftStick)
+        .."\n-------right stick:\n"
+        ..dpadTableReport(diags.rightStick)
+        )
+    end
 end
 
-function generateDpadStickReport(stick)
+function generateOneDpadStickReport(stick)
     local dpad = stick:activatedDpadDirections()
     local diags = stick:activatedDpadDirections(true)
     return

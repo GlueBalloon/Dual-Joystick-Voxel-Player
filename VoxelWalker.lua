@@ -16,13 +16,13 @@ function VoxelWalker:init(entity, currentScene, sceneCamera, x, y, z)
     self.viewer = self.camera.entity:add(FPSWalkerViewer, 0.6, 5, {})
     self.viewer:setOutputReciever(self:defaultLeftStickFunction(), self:defaultRightStickFunction())
     self.camera.ortho = false    
+    self.viewer.rx = 45
+    self.viewer.ry = -45   
+    self.camera.parent = self.entity
     self.speed = 10
     self.maxForce = 35
     self.jumpForce = 5.5
-    self.viewer.rx = 45
-    self.viewer.ry = -45   
     self.entity.position = vec3(x, y, z)
-    self.camera.entity.parent = self.entity
     self.camera.entity.position = vec3(0,0.85,0)    
     touches.addHandler(self, 0, true)    
     -- Player physics

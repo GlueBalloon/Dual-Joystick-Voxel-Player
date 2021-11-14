@@ -12,19 +12,18 @@ function DJVPlayer:init(entity, currentScene, sceneCamera, x, y, z)
     assert(touches, "Please include Touches project as a dependency")
     self.scene = currentScene
     self.camera = sceneCamera
-    print(self.camera)
-    self.entity = self.camera.entity 
+    self.entity = self.scene:entity()
     self.viewer = self.camera.entity:add(FPSWalkerViewer, 0.6, 5, {})
     self.viewer:setOutputReciever(self:defaultLeftStickFunction(), self:defaultRightStickFunction())
-    self.camera.ortho = false    
+    self.camera.ortho = false   
+    self.viewer.rx = 45
+    self.viewer.ry = -45   
+    self.camera.parent = self.entity
     self.speed = 10
     self.maxForce = 35
     self.jumpForce = 5.5
-    self.viewer.rx = 45
-    self.viewer.ry = -45   
     self.entity.position = vec3(x, y, z)
-    self.camera.entity.parent = self.entity
-  --  self.camera.entity.position = vec3(0,0,0)    
+    self.camera.entity.position = vec3(0,0.85,0)    
     touches.addHandler(self, 0, true)    
     -- Player physics
     self.rb = self.entity:add(craft.rigidbody, DYNAMIC, 1)
@@ -33,7 +32,7 @@ function DJVPlayer:init(entity, currentScene, sceneCamera, x, y, z)
     self.rb.friction = 0.5
     self.rb.group = DJVPlayer.GROUP
     self.entity:add(craft.shape.capsule, 0.5, 1.0)    
-    self.scene.physics.gravity = vec3(0,-14.8,0)
+    self.scene.physics.gravity = vec3(0,0,0)
     self.contollerYInputAllowed = false
 end
 
@@ -76,13 +75,13 @@ function DJVPlayer:defaultLeftStickFunction()
         finalDir.z = math.min(finalDir.z or 2)
         self.rb:applyForce(finalDir * self.maxForce)
         
-        local hit1 = self.scene.physics:sphereCast(self.entity.position, vec3(0,-1,0), 0.52, 0.48, ~0, ~DJVPlayer.GROUP)
+        local hit1 = self.scene.physics:sphereCast(self.camera.entity.position, vec3(0,-1,0), 0.52, 0.48, ~0, ~DJVPlayer.GROUP)
         
         if hit1 and hit1.normal.y > 0.5 then
             self.grounded = true
         end
         
-        local hit2 = self.scene.physics:sphereCast(self.entity.position, vec3(0,-1,0), 0.5, 0.52, ~0, ~DJVPlayer.GROUP)
+        local hit2 = self.scene.physics:sphereCast(self.camera.entity.position, vec3(0,-1,0), 0.5, 0.52, ~0, ~DJVPlayer.GROUP)
         if hit2 and hit2.normal.y < 0.5 then
             self:jump()
         end
@@ -91,18 +90,28 @@ end
 
 function DJVPlayer:defaultRightStickFunction()
     return function(_)
+        print("reacting to right stick")
         if self.viewer.enabled then  
             -- clamp vertical rotation between -90 and 90 degrees (no upside down view)
             self.viewer.rx = math.min(math.max(self.viewer.rx, -90), 90)
             local rotation = quat.eulerAngles(self.viewer.rx,  self.viewer.ry, 0)
             self.viewer.camera.rotation = rotation
         end
+        
+        --[[
+        if self.viewer.enabled then  
+            -- clamp vertical rotation between -90 and 90 degrees (no upside down view)
+            self.viewer.rx = math.min(math.max(self.viewer.rx, -90), 90)
+            local rotation = quat.eulerAngles(self.viewer.rx,  self.viewer.ry, 0)
+            self.camera.rotation = rotation
+        end
+        ]]
     end
 end
 
 function DJVPlayer:update()
     
-if (not self.camera) or (not self.viewer) or (not self.viewer.touch)  then
+    if (not self.camera) or (not self.viewer) or (not self.viewer.touch)  then
         self:setupCameras()
     end
     if not self.viewer.joysticks then

@@ -22,16 +22,17 @@ function setup()
     
     --create player
     player = djvPlayerMaker(scene)
+   -- player = voxelWalkerMaker(scene)
 end
 
 function update(dt)
     scene:update(dt)
     parameter.watch("player.entity.position")
-    parameter.watch("player.camera.position")
-    parameter.watch("player.viewer.position")
+-- nil:  parameter.watch("player.camera.position")
+-- nil:   parameter.watch("player.viewer.position")
     parameter.watch("player.viewer.rx")
     parameter.watch("player.viewer.ry")
-    parameter.watch("player.viewer.eulerAngles")
+-- nil:  parameter.watch("player.viewer.eulerAngles")
     parameter.watch("player.camera.entity.position")
     parameter.watch("player.camera.entity.position")
 end

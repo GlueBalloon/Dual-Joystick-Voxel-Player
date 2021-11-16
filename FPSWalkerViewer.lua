@@ -36,12 +36,11 @@ function FPSWalkerViewer:setOutputReciever(functionForLeftStick, functionForRigh
     local outputTable = {left = functionForLeftStick, right = functionForRightStick}
     table.insert(self.outputs, outputTable)
 end
-
+--[[
 function FPSWalkerViewer:isActive()
     return self.state ~= IDLE
 end
 
---[[
 function FPSWalkerViewer:longPressProgress()
     if self.touchState == FPSWalkerViewer.BEGAN then
         return (ElapsedTime - self.startTime) / self.longPressDuration
@@ -51,7 +50,6 @@ function FPSWalkerViewer:longPressProgress()
     return 0
 end
 ]]
-
 function FPSWalkerViewer:update()
     --[[
     if self.touchState == FPSWalkerViewer.BEGAN then
@@ -68,8 +66,8 @@ function FPSWalkerViewer:update()
     
     if self.touchState == FPSWalkerViewer.DRAGGING then
     --    if self.callbacks.dragging then self.callbacks.dragging(self.lastTouch) end
-    end
-
+    end]]
+    --[[
     if self.enabled then  
         -- clamp vertical rotation between -90 and 90 degrees (no upside down view)
         self.rx = math.min(math.max(self.rx, -90), 90)
@@ -77,35 +75,36 @@ function FPSWalkerViewer:update()
         self.camera.rotation = rotation
     end
     ]]
-
+    for _, stick in ipairs(self.joysticks) do
+        for _, outputTable in ipairs(self.outputs) do
+            if outputTable.left and stick.type == "leftStick" then
+                outputTable.left(stick)
+            elseif outputTable.right and stick.type == "rightStick" then
+                outputTable.right(stick)
+            end 
+        end
+    end
 end
-
+--[[
 function FPSWalkerViewer:scroll(gesture)
-print("scrolling")
     if gesture.state == BEGAN then 
         return true
     elseif gesture.state == MOVING then
         self.rx = self.rx - gesture.delta.y * self.sensitivity
         self.ry = self.ry - gesture.delta.x * self.sensitivity    
     end
-    end
+end
+]]
+function FPSWalkerViewer:touched(touch)
     
-function FPSWalkerViewer:reactToJoystickTouched(touch)
-    --creates or removes joysticks and returns true if the touch should then go to the rest of the viewer
-    local leftTouch, rightTouch = false, false
-    if touch.x<WIDTH/2 then 
-        leftTouch = true
-    else
-        rightTouch = true
-    end
     if touch.state==BEGAN then
         if #self.joysticks < 2 then
-            if leftTouch then 
+            if touch.x<WIDTH/2 then 
                 if #self.joysticks == 0 or (self.joysticks[1] and self.joysticks[1].type ~= "leftStick") then 
                     table.insert(self.joysticks,Joystick(touch.x,touch.y,touch.id,"leftStick")) 
                 end
             elseif #self.joysticks == 0 or (self.joysticks[1] and self.joysticks[1].type ~= "rightStick") then
-                table.insert(self.joysticks,Joystick(touch.x,touch.y,touch.id,"rightStick")) 
+                 table.insert(self.joysticks,Joystick(touch.x,touch.y,touch.id,"rightStick")) 
             end
         end
     elseif touch.state == ENDED or touch.state == CANCELLED then
@@ -120,26 +119,7 @@ function FPSWalkerViewer:reactToJoystickTouched(touch)
                 stick:touched(touch)
             end 
         end
-    end  
-    
-    for _, stick in ipairs(self.joysticks) do
-        for _, outputTable in ipairs(self.outputs) do
-            if outputTable.left and stick.type == "leftStick" then
-                outputTable.left(stick)
-            elseif outputTable.right and stick.type == "rightStick" then
-                outputTable.right(stick)
-            end 
-        end
-    end
-    
-    return rightTouch  
-end
-    
-function FPSWalkerViewer:touched(touch)
-    print("FPSWalkerViewer touched")
-
-    --create or remove joysticks and if it's a left-side touch, bail
-    if not self:reactToJoystickTouched(touch) then return end
+    end    
     
     if self.state == IDLE then
         if touch.state == BEGAN then
@@ -151,7 +131,6 @@ function FPSWalkerViewer:touched(touch)
             end        
         end       
     elseif self.state == ROTATE then
-        print("should be rotating")
         if touch.state == MOVING then
             self.rx = self.rx - touch.deltaY * self.sensitivity
             self.ry = self.ry - touch.deltaX * self.sensitivity

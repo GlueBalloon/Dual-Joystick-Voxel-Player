@@ -15,18 +15,22 @@ function setup()
     scene.voxels.coordinates = vec3(0,0,0)
     
     -- Create ground out of grass
-    scene.voxels:fill("Diamond Ore")
+    scene.voxels:fill("Sand")
     scene.voxels:box(0,10,0,16*5,10,16*5)
     scene.voxels:fill("Dirt")
     scene.voxels:box(0,0,0,16*5,9,16*5)
     
+    camThing = makeCameraViewerEntityThing(scene)
+    djViewer = doubleJoystickViewerRig(camThing)
+    camThing.position = vec3(40, 20, 40)
     --create player
-    player = djvPlayerMaker(scene)
-   -- player = voxelWalkerMaker(scene)
+   -- player = djvPlayerMaker(scene)
+  --  player = voxelWalkerMaker(scene)
 end
 
 function update(dt)
     scene:update(dt)
+    djViewer:update()
     parameter.watch("player.entity.position")
 -- nil:  parameter.watch("player.camera.position")
 -- nil:   parameter.watch("player.viewer.position")
@@ -41,7 +45,8 @@ function draw()
     --update and draw scene and player
     update(DeltaTime)
     scene:draw()
-    player:draw()
+    djViewer.draw()
+  --  player:draw()
     
     --change boolean to see live updates of simulated dpads
     if false then

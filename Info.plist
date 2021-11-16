@@ -11,19 +11,20 @@
 	<key>Buffer Order</key>
 	<array>
 		<string>Main</string>
-		<string>DJVPlayer</string>
 		<string>VoxelWalker</string>
 		<string>Joystick</string>
-		<string>H</string>
 		<string>FPSWalkerViewer</string>
+		<string>StandardCameraRigs</string>
+		<string>DoubleJoystickViewerRig</string>
+		<string>DJVPlayer</string>
+		<string>H</string>
 	</array>
 	<key>Dependencies</key>
 	<array>
 		<string>Craft:Cameras</string>
 		<string>Craft:UI</string>
-		<string>Craft:Block Library</string>
 		<string>Craft:Touches</string>
-		<string>Documents:CraftSceneInator</string>
+		<string>Craft:Block Library</string>
 	</array>
 	<key>Description</key>
 	<string>No description available</string>

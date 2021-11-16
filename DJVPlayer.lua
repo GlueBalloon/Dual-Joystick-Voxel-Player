@@ -11,18 +11,18 @@ function DJVPlayer:init(entity, currentScene, sceneCamera, x, y, z)
     local z = z or 40
     assert(touches, "Please include Touches project as a dependency")
     self.scene = currentScene
+    self.entity = self.scene:entity()  
     self.camera = sceneCamera
-    self.entity = self.scene:entity()
     self.viewer = self.camera.entity:add(FPSWalkerViewer, 0.6, 5, {})
     self.viewer:setOutputReciever(self:defaultLeftStickFunction(), self:defaultRightStickFunction())
-    self.camera.ortho = false   
-    self.viewer.rx = 45
-    self.viewer.ry = -45   
-    self.camera.parent = self.entity
+    self.camera.ortho = false    
     self.speed = 10
     self.maxForce = 35
     self.jumpForce = 5.5
+    self.viewer.rx = 45
+    self.viewer.ry = -45   
     self.entity.position = vec3(x, y, z)
+    self.camera.entity.parent = self.entity
     self.camera.entity.position = vec3(0,0.85,0)    
     touches.addHandler(self, 0, true)    
     -- Player physics
@@ -32,7 +32,7 @@ function DJVPlayer:init(entity, currentScene, sceneCamera, x, y, z)
     self.rb.friction = 0.5
     self.rb.group = DJVPlayer.GROUP
     self.entity:add(craft.shape.capsule, 0.5, 1.0)    
-    self.scene.physics.gravity = vec3(0,0,0)
+    self.scene.physics.gravity = vec3(0,-14.8,0)
     self.contollerYInputAllowed = false
 end
 

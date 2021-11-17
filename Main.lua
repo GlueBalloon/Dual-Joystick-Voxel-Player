@@ -27,10 +27,13 @@ function setup()
     scene.voxels:box(21,11,31, 49,11,59)
     
     camThing = makeCameraViewerEntityThing(scene)
-    djViewer = doubleJoystickViewerRig(camThing)
+    djViewer = doubleJoystickRig(camThing)
     djViewer.position = vec3(0, 5, -6)
     rigidCap = makeCapsuleBodyOn(scene:entity(), scene, true)
     rigidCap.position = vec3(46.5, 20, 46.5)
+    rigidCap.contollerYInputAllowed = true
+    rigidCap.rb.linearDamping = 0.95
+    scene.physics.gravity = vec3(0,0,0)
     djViewer.parent = rigidCap
     
     function moveCapsule(stick)

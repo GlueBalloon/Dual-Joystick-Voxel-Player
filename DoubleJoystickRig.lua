@@ -1,4 +1,4 @@
-function doubleJoystickViewerRig(camEntity)
+function doubleJoystickRig(camEntity)
     if touches then 
         touches.removeHandler(camEntity) 
         touches.addHandler(camEntity, 0, true)

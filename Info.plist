@@ -11,13 +11,13 @@
 	<key>Buffer Order</key>
 	<array>
 		<string>Main</string>
-		<string>VoxelWalker</string>
-		<string>Joystick</string>
-		<string>FPSWalkerViewer</string>
 		<string>StandardCameraRigs</string>
-		<string>DoubleJoystickViewerRig</string>
-		<string>DJVPlayer</string>
+		<string>Joystick</string>
+		<string>DoubleJoystickRig</string>
 		<string>PlayerCapsuleBody</string>
+		<string>VoxelWalker</string>
+		<string>FPSWalkerViewer</string>
+		<string>DJVPlayer</string>
 	</array>
 	<key>Dependencies</key>
 	<array>

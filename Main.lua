@@ -23,6 +23,8 @@ function setup()
     camThing = makeCameraViewerEntityThing(scene)
     djViewer = doubleJoystickViewerRig(camThing)
     camThing.position = vec3(40, 20, 40)
+    rigidCap = makeCapsuleBodyOn(scene:entity(), scene, true)
+    rigidCap.position = vec3(46.5, 20, 46.5)
     --create player
    -- player = djvPlayerMaker(scene)
   --  player = voxelWalkerMaker(scene)

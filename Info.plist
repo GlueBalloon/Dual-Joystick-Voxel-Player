@@ -17,7 +17,7 @@
 		<string>StandardCameraRigs</string>
 		<string>DoubleJoystickViewerRig</string>
 		<string>DJVPlayer</string>
-		<string>H</string>
+		<string>PlayerCapsuleBody</string>
 	</array>
 	<key>Dependencies</key>
 	<array>

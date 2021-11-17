@@ -19,37 +19,57 @@ function setup()
     scene.voxels:box(0,10,0,16*5,10,16*5)
     scene.voxels:fill("Dirt")
     scene.voxels:box(0,0,0,16*5,9,16*5)
+    --something to bump into to test jumps
+    scene.voxels:fill("Red Brick")
+    scene.voxels:box(20,11,30, 50,11,60)
+    scene.voxels:fill("empty")
+    scene.voxels:fillStyle(REPLACE)
+    scene.voxels:box(21,11,31, 49,11,59)
     
     camThing = makeCameraViewerEntityThing(scene)
     djViewer = doubleJoystickViewerRig(camThing)
-    camThing.position = vec3(40, 20, 40)
+    djViewer.position = vec3(0, 5, -6)
     rigidCap = makeCapsuleBodyOn(scene:entity(), scene, true)
     rigidCap.position = vec3(46.5, 20, 46.5)
-    --create player
-   -- player = djvPlayerMaker(scene)
-  --  player = voxelWalkerMaker(scene)
+    djViewer.parent = rigidCap
+    
+    function moveCapsule(stick)
+        local delta = stick.delta          
+        local forward = djViewer.forward * delta.y
+        local right = djViewer.right * -delta.x   
+        local finalDir = forward + right   
+        if not rigidCap.contollerYInputAllowed then       
+            finalDir.y = 0
+        end
+        if finalDir:len() > 0 then
+            finalDir = finalDir:normalize()
+        end    
+        finalDir.x = math.min(finalDir.x or 2)
+        finalDir.z = math.min(finalDir.z or 2)
+        rigidCap.move(finalDir)
+    end
+    djViewer.setOutputReciever(moveCapsule)
+    parameter.boolean("parent", false, function(shouldEnter)
+        if shouldEnter then
+            djViewer.position = vec3(0, 0.85, 0)
+
+        else
+            djViewer.parent = nil
+            djViewer.position = vec3(40, 20, 40) 
+        end
+    end)
 end
 
 function update(dt)
     scene:update(dt)
     djViewer:update()
-    parameter.watch("player.entity.position")
--- nil:  parameter.watch("player.camera.position")
--- nil:   parameter.watch("player.viewer.position")
-    parameter.watch("player.viewer.rx")
-    parameter.watch("player.viewer.ry")
--- nil:  parameter.watch("player.viewer.eulerAngles")
-    parameter.watch("player.camera.entity.position")
-    parameter.watch("player.camera.entity.position")
 end
 
 function draw()
     --update and draw scene and player
     update(DeltaTime)
     scene:draw()
-    djViewer.draw()
-  --  player:draw()
-    
+    djViewer.draw()    
     --change boolean to see live updates of simulated dpads
     if false then
         generateTwoStickDpadReport(player)

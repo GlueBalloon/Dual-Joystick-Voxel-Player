@@ -25,6 +25,7 @@
 		<string>Craft:UI</string>
 		<string>Craft:Touches</string>
 		<string>Craft:Block Library</string>
+		<string>Documents:Positionator</string>
 	</array>
 	<key>Description</key>
 	<string>No description available</string>

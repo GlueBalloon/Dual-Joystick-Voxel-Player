@@ -28,13 +28,25 @@ function setup()
     
     camThing = makeCameraViewerEntityThing(scene)
     djViewer = doubleJoystickRig(camThing)
-    djViewer.position = vec3(0, 5, -6)
+    djViewer.position = vec3(46.5, 11.5, 37.5)
     rigidCap = makeCapsuleBodyOn(scene:entity(), scene, true)
     rigidCap.position = vec3(46.5, 20, 46.5)
     rigidCap.contollerYInputAllowed = true
     rigidCap.rb.linearDamping = 0.95
-    scene.physics.gravity = vec3(0,0,0)
-    djViewer.parent = rigidCap
+    --djViewer.parent = rigidCap
+    
+    rigidCap2 = makeCapsuleBodyOn(scene:entity(), scene, true)
+    modelBody = scene:entity()
+    modelBody.model = craft.model(asset.builtin.Blocky_Characters.WomanAlternative)
+    modelBody.position = vec3(0, -0.998, 0)
+    modelBody.scale = vec3(0.12485, 0.12485, 0.12485)
+    modelBody.parent = rigidCap2
+    rigidCap2.position = vec3(44.5, 21, 44.5)
+    --rigidCap2.scale = vec3(0.1, 0.1, 0.1)
+    poser = Positionator(djViewer)
+    poser:setParameters()
+    
+    scene.physics.gravity = vec3(0,-7.8,0)
     
     function moveCapsule(stick)
         local delta = stick.delta          

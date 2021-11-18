@@ -4,7 +4,7 @@ function joystickWalkerRig(camEntity, scene, blockCharacterAsset)
 
     --make an entity with a rigidbody capsule rig
     body = rigidCapsuleRig(scene:entity(), scene)
-    body.contollerYInputAllowed = true
+    body.contollerYInputAllowed = false
     body.rb.linearDamping = 0.97
     
     --make an entity to house the visible character model
@@ -25,10 +25,16 @@ function joystickWalkerRig(camEntity, scene, blockCharacterAsset)
     joystickView.parent = body
     body.joystickView = joystickView
     
-    --route some standard calls to the joystick view's version 
-    --if this isn't done the joysticks won't work
+    --merge the draw and update functions of the body entity and the 
+    --camera entity. 'Draw' is easy because the body doesn't have its own 
+    --draw function, but the body does have its own update function, so 
+    --that has to be combined with the camera update function.
     body.draw = joystickView.draw
-    body.update = joystickView.update
+    local bodyUpdate, jvUpdate = body.update, joystickView.update
+    body.update = function()
+        bodyUpdate()
+        jvUpdate()
+    end
     
     --a function for the left joystick to control the body
     function moveCapsule(stick)

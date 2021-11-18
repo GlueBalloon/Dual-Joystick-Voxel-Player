@@ -1,3 +1,6 @@
+-- A class that draws a simulated joystick and tracks the angle and 
+--length of the current touch from the  touch that it spawned woth.
+--it also can represent the joystick position as a directional-pad state.
 Joystick = class()
 
 function Joystick:init(x,y,id,ty)
@@ -39,8 +42,8 @@ function Joystick:activatedDpadDirections(diagonalsAllowed)
     local padState = {left = false, right = false, up = false, down = false}
     local angle = self:angle()
     --ignore stick position if it's basically centered
-    if math.abs(self.delta.x) < self.largeRadius * 0.1
-    and math.abs(self.delta.y) < self.largeRadius * 0.1
+    if math.abs(self.delta.x) < self.largeRadius * 0.2
+    and math.abs(self.delta.y) < self.largeRadius * 0.2
     then return padState end
     --set ranges to convert angles to dpad presses
     local downRange = {under = -45, over = -125}
@@ -76,7 +79,6 @@ end
     
 function Joystick:touched(t)
     if t.id == self.touchID then
-      --  print(self.type.." detected its id")
         self.touchX = t.x
         self.touchY = t.y
         self.delta = vec2(self.touchX - self.ox, self.touchY - self.oy)

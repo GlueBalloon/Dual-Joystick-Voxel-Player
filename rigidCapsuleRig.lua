@@ -1,7 +1,10 @@
+-- A function that attaches a rigid body capsule to an entity and 
+--provides a way to push the body along an angle. The body does a small 
+-- jump when it bumps into something.
 function rigidCapsuleRig(anEntity, scene, shouldShowCapsule)
     anEntity.GROUP = 1<<11
-    anEntity.speed = 1
-    anEntity.maxForce = 30
+    anEntity.speed = 1000
+    anEntity.maxForce = 40
     anEntity.jumpForce = 5.5
     anEntity.rb = anEntity:add(craft.rigidbody, DYNAMIC, 1)
     anEntity.rb.angularFactor = vec3(0,0,0) -- disable rotation

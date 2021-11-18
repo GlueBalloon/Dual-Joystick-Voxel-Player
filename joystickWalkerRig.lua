@@ -30,6 +30,7 @@ function joystickWalkerRig(camEntity, scene, blockCharacterAsset)
     --draw function, but the body does have its own update function, so 
     --that has to be combined with the camera update function.
     body.draw = joystickView.draw
+    body.touched = joystickView.touched
     local bodyUpdate, jvUpdate = body.update, joystickView.update
     body.update = function()
         bodyUpdate()

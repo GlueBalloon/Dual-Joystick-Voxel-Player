@@ -1,3 +1,61 @@
+-- a rig that combines the joystick rig with the rigid capsule rig
+--and makes the left joystck control the capsule motion
+function joystickWalkerRig(camEntity, scene, blockCharacterAsset)
+
+    --make an entity with a rigidbody capsule rig
+    body = rigidCapsuleRig(scene:entity(), scene)
+    body.contollerYInputAllowed = true
+    body.rb.linearDamping = 0.97
+    
+    --make an entity to house the visible character model
+    --this can't be the model of the body itself, because it
+    --has to be able to scale separately from that body
+    --so that the visible model can fit inside the rigid capsule
+    characterModelEntity = scene:entity()
+    characterModelEntity.model = craft.model(blockCharacterAsset)
+    characterModelEntity.position = vec3(0, -0.998, 0)
+    characterModelEntity.scale = vec3(0.12485, 0.12485, 0.12485)
+    characterModelEntity.parent = body  
+    scene.physics.gravity = vec3(0,-14.8,0)
+    
+    --take the camera entity passed in and give it joysticks
+    --and make it a child of the body, so it moves with the body
+    local joystickView = doubleJoystickRig(camEntity)
+    joystickView.position = vec3(0, 0.95, 0)
+    joystickView.parent = body
+    body.joystickView = joystickView
+    
+    --route some standard calls to the joystick view's version 
+    --if this isn't done the joysticks won't work
+    body.draw = joystickView.draw
+    body.update = joystickView.update
+    
+    --a function for the left joystick to control the body
+    function moveCapsule(stick)
+        local delta = stick.delta          
+        local forward = joystickView.forward * delta.y
+        local right = joystickView.right * -delta.x   
+        local finalDir = forward + right   
+        if not body.contollerYInputAllowed then       
+            finalDir.y = 0
+        end
+        if finalDir:len() > 0 then
+            finalDir = finalDir:normalize()
+        end    
+        finalDir.x = math.min(finalDir.x or 2)
+        finalDir.z = math.min(finalDir.z or 2)
+        body.move(finalDir)
+    end
+    
+    --assign that function to receive the left joystick output
+    joystickView.setOutputReciever(moveCapsule)
+    
+    --send back the body
+    return body
+end
+    
+--a rig that creates two joysticks and a camera
+--and sets the right joystick to control the camera
 function doubleJoystickRig(camEntity)
     if touches then 
         touches.removeHandler(camEntity) 
@@ -36,6 +94,22 @@ function doubleJoystickRig(camEntity)
     end
     
     camEntity.setOutputReciever(nil, camEntity.defaultRightOutputReciever())
+    
+    function camEntity.dpadStates(diagonalsAllowed)
+        local rightStick = {left = false, right = false, up = false, down = false}
+        local leftStick = {left = false, right = false, up = false, down = false}
+        if camEntity.joysticks then
+            for _, stick in ipairs(camEntity.joysticks) do
+                if stick.type == "rightStick" then
+                    rightStick = stick:activatedDpadDirections(diagonalsAllowed)
+                end
+                if stick.type == "leftStick" then
+                    leftStick = stick:activatedDpadDirections(diagonalsAllowed)
+                end
+            end
+        end
+        return {rightStick = rightStick, leftStick = leftStick}
+    end
     
     function camEntity.update()
         --from first person viewer

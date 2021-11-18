@@ -3,98 +3,69 @@
 viewer.mode = OVERLAY
 
 function setup()
+    
     scene = craft.scene()
     
-    -- Setup camera and lighting
-    scene.sun.rotation = quat.eulerAngles(25, 125, 0)
-    scene.ambientColor = color(127, 127, 127, 255)   
+    makeGround()
     
+    --make a camera/entity hybrid
+    local camThing = makeCameraViewerEntityThing(scene)
+    
+    --use the hybrid to make a player body controlled by joysticks
+    --its camera is initially placed inside the body for a first-person view
+    playerBody = joystickWalkerRig(camThing, scene, asset.builtin.Blocky_Characters.Soldier)
+    playerBody.position = vec3(46.5, 20, 46.5)
+    
+    --a control to switch between first and third person views
+    parameter.boolean("thirdPersonView", false, function(shouldBe3rdPerson)      
+        if shouldBe3rdPerson then
+            playerBody.joystickView.position = vec3(0, 4.5, -7)
+            playerBody.joystickView.rx = 25
+        else
+            playerBody.joystickView.position = vec3(0, 0.85, 0) 
+            playerBody.joystickView.rx = 0          
+        end
+    end)
+end
+
+function makeGround()
     -- Setup voxel terrain
     allBlocks = blocks()    
     scene.voxels:resize(vec3(5,1,5))      
-    scene.voxels.coordinates = vec3(0,0,0)
-    
+    scene.voxels.coordinates = vec3(0,0,0)    
     -- Create ground out of grass
     scene.voxels:fill("Sand")
     scene.voxels:box(0,10,0,16*5,10,16*5)
     scene.voxels:fill("Dirt")
     scene.voxels:box(0,0,0,16*5,9,16*5)
-    --something to bump into to test jumps
+    --something to bump into, for testing jumps
     scene.voxels:fill("Red Brick")
     scene.voxels:box(20,11,30, 50,11,60)
     scene.voxels:fill("empty")
     scene.voxels:fillStyle(REPLACE)
     scene.voxels:box(21,11,31, 49,11,59)
-    
-    camThing = makeCameraViewerEntityThing(scene)
-    djViewer = doubleJoystickRig(camThing)
-    djViewer.position = vec3(46.5, 11.5, 37.5)
-    rigidCap = makeCapsuleBodyOn(scene:entity(), scene, true)
-    rigidCap.position = vec3(46.5, 20, 46.5)
-    rigidCap.contollerYInputAllowed = true
-    rigidCap.rb.linearDamping = 0.95
-    --djViewer.parent = rigidCap
-    
-    rigidCap2 = makeCapsuleBodyOn(scene:entity(), scene, true)
-    modelBody = scene:entity()
-    modelBody.model = craft.model(asset.builtin.Blocky_Characters.WomanAlternative)
-    modelBody.position = vec3(0, -0.998, 0)
-    modelBody.scale = vec3(0.12485, 0.12485, 0.12485)
-    modelBody.parent = rigidCap2
-    rigidCap2.position = vec3(44.5, 21, 44.5)
-    --rigidCap2.scale = vec3(0.1, 0.1, 0.1)
-    poser = Positionator(djViewer)
-    poser:setParameters()
-    
-    scene.physics.gravity = vec3(0,-7.8,0)
-    
-    function moveCapsule(stick)
-        local delta = stick.delta          
-        local forward = djViewer.forward * delta.y
-        local right = djViewer.right * -delta.x   
-        local finalDir = forward + right   
-        if not rigidCap.contollerYInputAllowed then       
-            finalDir.y = 0
-        end
-        if finalDir:len() > 0 then
-            finalDir = finalDir:normalize()
-        end    
-        finalDir.x = math.min(finalDir.x or 2)
-        finalDir.z = math.min(finalDir.z or 2)
-        rigidCap.move(finalDir)
-    end
-    djViewer.setOutputReciever(moveCapsule)
-    parameter.boolean("parent", false, function(shouldEnter)
-        if shouldEnter then
-            djViewer.position = vec3(0, 0.85, 0)
-
-        else
-            djViewer.parent = nil
-            djViewer.position = vec3(40, 20, 40) 
-        end
-    end)
 end
 
 function update(dt)
     scene:update(dt)
-    djViewer:update()
+    playerBody.update()
 end
 
 function draw()
     --update and draw scene and player
     update(DeltaTime)
     scene:draw()
-    djViewer.draw()    
+    playerBody.draw()    
     --change boolean to see live updates of simulated dpads
     if false then
-        generateTwoStickDpadReport(player)
+        generateTwoStickDpadReport(playerBody.joystickView)
     end
 end
 
 function generateTwoStickDpadReport(player)
-    if #player.viewer.joysticks > 0 then
-        local dpads = player:dpadStates()
-        local diags = player:dpadStates(true)
+    if #player.joysticks > 0 then
+        local dpads = player.dpadStates()
+        local diags = player.dpadStates(true)
         print(
         "\n**no diagonals allowed: "..
         "\n-------left stick:\n"

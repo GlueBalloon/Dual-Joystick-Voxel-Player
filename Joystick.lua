@@ -1,7 +1,6 @@
 Joystick = class()
 
 function Joystick:init(x,y,id,ty)
-   -- print("initting joystick")
     self.ox=x
     self.oy=y
     self.cx=x

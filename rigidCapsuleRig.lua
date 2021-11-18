@@ -1,7 +1,7 @@
-function makeCapsuleBodyOn(anEntity, scene, shouldShowCapsule)
+function rigidCapsuleRig(anEntity, scene, shouldShowCapsule)
     anEntity.GROUP = 1<<11
     anEntity.speed = 1
-    anEntity.maxForce = 10
+    anEntity.maxForce = 30
     anEntity.jumpForce = 5.5
     anEntity.rb = anEntity:add(craft.rigidbody, DYNAMIC, 1)
     anEntity.rb.angularFactor = vec3(0,0,0) -- disable rotation

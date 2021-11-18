@@ -3,7 +3,7 @@
 --it also can represent the joystick position as a directional-pad state.
 Joystick = class()
 
-function Joystick:init(x,y,id,ty)
+function Joystick:init(x,y,id,ty, strokeColor1, strokeColor2)
     self.ox=x
     self.oy=y
     self.cx=x
@@ -18,16 +18,20 @@ function Joystick:init(x,y,id,ty)
     self.delta = vec2(0,0)
     self.smallRadius = 80
     self.largeRadius = 150
+    self.stroke1 = strokeColor1 or color(255, 103)
+    self.stroke2 = strokeColor2 or color(255, 163)
 end
 
 function Joystick:draw()
+    local bigCircleFill = color(self.stroke1.r, self.stroke1.g, self.stroke1.b, 8)
+    local smallCircleFill = color(self.stroke1.r, self.stroke1.g, self.stroke1.b, 16)
     pushStyle()
-    stroke(255, 103)
+    stroke(self.stroke1)
     strokeWidth(2)
-    fill(255, 8)
+    fill(bigCircleFill)
     ellipse(self.ox,self.oy, self.largeRadius)
-    stroke(255, 163)
-    fill(255, 16)
+    stroke(self.stroke2)
+    fill(smallCircleFill)
     ellipse(self.touchX,self.touchY, self.smallRadius)
     popStyle()
 end

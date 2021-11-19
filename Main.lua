@@ -8,22 +8,20 @@ function setup()
     
     makeGround()
     
-    --make a camera/entity hybrid
-    local camThing = makeCameraViewerEntityThing(scene)
     
-    --use the hybrid to make a player body controlled by joysticks
+    --make a player body controlled by joysticks, with separate camera entity
     --its camera is initially placed inside the body for a first-person view
-    playerBody = joystickWalkerRig(camThing, scene, asset.builtin.Blocky_Characters.Soldier)
+    playerBody = joystickWalkerRig(scene:entity(), scene, asset.builtin.Blocky_Characters.Soldier)
     playerBody.position = vec3(46.5, 20, 46.5)
     
     --a control to switch between first and third person views
     parameter.boolean("thirdPersonView", false, function(shouldBe3rdPerson)      
         if shouldBe3rdPerson then
-            playerBody.joystickView.position = vec3(0, 4.5, -7)
-            playerBody.joystickView.rx = 25
+            playerBody.rig.joystickView.position = vec3(0, 4.5, -7)
+            playerBody.rig.joystickView.rx = 25
         else
-            playerBody.joystickView.position = vec3(0, 0.85, 0) 
-            playerBody.joystickView.rx = 0          
+            playerBody.rig.joystickView.position = vec3(0, 0.85, 0) 
+            playerBody.rig.joystickView.rx = 0          
         end
     end)
 end

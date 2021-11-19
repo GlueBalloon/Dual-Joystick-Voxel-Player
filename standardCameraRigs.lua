@@ -3,6 +3,8 @@
 --viewer, and entity all in one
 function makeCameraViewerEntityThing(scene)
     local cameraEntity = scene:entity()
+    if not cameraEntity.rig then cameraEntity.rig = {} end
+    local rig = cameraEntity.rig
     cameraEntity:add(craft.camera, 45, 0.1, 1000, false)
     cameraEntity.camera = cameraEntity:get(craft.camera)
     cameraEntity.fieldOfView = function(floatOrNil)
@@ -54,15 +56,15 @@ function makeCameraViewerEntityThing(scene)
             return cameraEntity.camera.clearColor
         end 
     end
-    cameraEntity.rx = 0
-    cameraEntity.ry = 0
-    cameraEntity.sensitivity = 0.25
-    function cameraEntity.camRxRy(rx, ry)
+    rig.rx = 0
+    rig.ry = 0
+    rig.sensitivity = 0.25
+    function rig.camRxRy(rx, ry)
         if (not rx) and (not ry) then
-            return cameraEntity.rx, cameraEntity.ry
+            return rig.rx, rig.ry
         end
-        cameraEntity.rx, cameraEntity.ry = rx, ry
-        cameraEntity.eulerAngles = vec3(cameraEntity.rx,  cameraEntity.ry, 0)
+        rig.rx, rig.ry = rx, ry
+        cameraEntity.eulerAngles = vec3(rig.rx,  rig.ry, 0)
     end
     return cameraEntity
 end
@@ -71,13 +73,13 @@ end
 --(this also acts a schematic of the functions available 
 --when designing your own rigs)
 function clearRig(camEntity)
-    if touches then 
-        touches.removeHandler(camEntity)
+    if touches then     touches.removeHandler(camEntity)
     end
     camEntity.update = nil
     camEntity.touched = nil
     camEntity.scroll = nil
     camEntity.hover = nil
+    camEntity.rig = nil
 end
 
 --applying a rig to a cameraViewerEntityThing is similar
@@ -94,37 +96,39 @@ function firstPersonRig(camEntity)
         touches.removeHandler(camEntity) 
         touches.addHandler(camEntity, 0, false)
     end
-    camEntity.IDLE = 1
-    camEntity.ROTATE = 2
-    camEntity.state = camEntity.IDLE
-    camEntity.start = vec2(0,0)
-    camEntity.enabled = true
-    camEntity.isActive = function()
-        return camEntity.state ~= camEntity.IDLE
+    if not camEntity.rig then camEntity.rig = {} end
+    local rig = camEntity.rig
+    rig.IDLE = 1
+    rig.ROTATE = 2
+    rig.state = rig.IDLE
+    rig.start = vec2(0,0)
+    rig.enabled = true
+    rig.isActive = function()
+        return rig.state ~= rig.IDLE
     end
     camEntity.update = function()
-        if camEntity.enabled and camEntity.state == camEntity.ROTATE then  
+        if rig.enabled and rig.state == rig.ROTATE then  
             -- clamp vertical rotation between -90 and 90 degrees (no upside down view)
-            camEntity.rx = math.min(math.max(camEntity.rx, -90), 90)
-            camEntity.camRxRy(camEntity.rx, camEntity.ry)
+            rig.rx = math.min(math.max(rig.rx, -90), 90)
+            rig.camRxRy(rig.rx, rig.ry)
         end
     end
     camEntity.touched = function(not_self, touch)
-        if camEntity.state == camEntity.IDLE then
+        if rig.state == rig.IDLE then
             if touch.state == BEGAN then
-                camEntity.start = vec2(touch.x, touch.y)
+                rig.start = vec2(touch.x, touch.y)
             elseif touch.state == MOVING then
-                local length = (vec2(touch.x, touch.y) - camEntity.start):len()
+                local length = (vec2(touch.x, touch.y) - rig.start):len()
                 if length >= 5 then
-                    camEntity.state = camEntity.ROTATE
+                    rig.state = rig.ROTATE
                 end        
             end       
-        elseif camEntity.state == camEntity.ROTATE then
+        elseif rig.state == rig.ROTATE then
             if touch.state == MOVING then
-                camEntity.rx = camEntity.rx - touch.deltaY * camEntity.sensitivity
-                camEntity.ry = camEntity.ry - touch.deltaX * camEntity.sensitivity
+                rig.rx = rig.rx - touch.deltaY * rig.sensitivity
+                rig.ry = rig.ry - touch.deltaX * rig.sensitivity
             elseif touch.state == ENDED then
-                camEntity.state = camEntity.IDLE
+                rig.state = rig.IDLE
             end           
         end
         return true
@@ -138,198 +142,200 @@ function orbitViewerRig(camEntity)
         touches.removeHandler(camEntity) 
         touches.addHandler(camEntity, 0, true)
     end
-    camEntity.target = target or vec3(0,0,0)
-    camEntity.origin = camEntity.target    
-    camEntity.zoom = 5
-    camEntity.minZoom = 1
-    camEntity.maxZoom = 20    
-    camEntity.touches = {}
-    camEntity.prev = {}    
+    if not camEntity.rig then camEntity.rig = {} end
+    local rig = camEntity.rig
+    rig.target = target or vec3(0,0,0)
+    rig.origin = rig.target    
+    rig.zoom = 5
+    rig.minZoom = 1
+    rig.maxZoom = 20    
+    rig.touches = {}
+    rig.prev = {}    
     -- Angular momentum
-    camEntity.mx = 0
-    camEntity.my = 0
+    rig.mx = 0
+    rig.my = 0
     -- Project a 2D point z units from the camera
-    function camEntity.project(p, z)
+    function rig.project(p, z)
         local origin, dir = camEntity.camera:screenToRay(p)   
         return origin + dir * z
     end
     -- Calculate overscroll curve for zooming
-    function camEntity.scrollDamping(x,s)
+    function rig.scrollDamping(x,s)
         return s * math.log(x + s) - s * math.log(s)
     end
     -- Calculate the distance between the current two touches
-    function camEntity.pinchDist()
-        local p1 = vec2(camEntity.touches[1].x, camEntity.touches[1].y)
-        local p2 = vec2(camEntity.touches[2].x, camEntity.touches[2].y)
+    function rig.pinchDist()
+        local p1 = vec2(rig.touches[1].x, rig.touches[1].y)
+        local p2 = vec2(rig.touches[2].x, rig.touches[2].y)
         return p1:dist(p2)
     end
     
     -- Calculate the mid point between the current two touches
-    function camEntity.pinchMid()
-        local p1 = vec2(camEntity.touches[1].x, camEntity.touches[1].y)
-        local p2 = vec2(camEntity.touches[2].x, camEntity.touches[2].y)
+    function rig.pinchMid()
+        local p1 = vec2(rig.touches[1].x, rig.touches[1].y)
+        local p2 = vec2(rig.touches[2].x, rig.touches[2].y)
         return (p1 + p2) * 0.5
     end
     
-    function camEntity.clampZoom(zoom)
-        if zoom > camEntity.maxZoom then
-            local overshoot = zoom - camEntity.maxZoom
-            overshoot = camEntity.scrollDamping(overshoot, 10.0)
-            zoom = camEntity.maxZoom + overshoot
-        elseif zoom < camEntity.minZoom then
-            local overshoot = camEntity.minZoom - zoom
-            overshoot = camEntity.scrollDamping(overshoot, 10.0)
-            zoom = camEntity.minZoom - overshoot
+    function rig.clampZoom(zoom)
+        if zoom > rig.maxZoom then
+            local overshoot = zoom - rig.maxZoom
+            overshoot = rig.scrollDamping(overshoot, 10.0)
+            zoom = rig.maxZoom + overshoot
+        elseif zoom < rig.minZoom then
+            local overshoot = rig.minZoom - zoom
+            overshoot = rig.scrollDamping(overshoot, 10.0)
+            zoom = rig.minZoom - overshoot
         end
         return zoom
     end
     
-    function camEntity.rotate(x, y)
-        camEntity.rx = camEntity.rx - y * camEntity.sensitivity
-        camEntity.ry = camEntity.ry - x * camEntity.sensitivity   
-        camEntity.camRxRy(camEntity.rx, camEntity.ry)
+    function rig.rotate(x, y)
+        rig.rx = rig.rx - y * rig.sensitivity
+        rig.ry = rig.ry - x * rig.sensitivity   
+        rig.camRxRy(rig.rx, rig.ry)
     end
     
-    function camEntity.pan(p1, p2)
-        local p1 = camEntity.project(p1, camEntity.zoom)  
-        local p2 = camEntity.project(p2, camEntity.zoom)
+    function rig.pan(p1, p2)
+        local p1 = rig.project(p1, rig.zoom)  
+        local p2 = rig.project(p2, rig.zoom)
         
-        camEntity.target = camEntity.target + (p1-p2)  
+        rig.target = rig.target + (p1-p2)  
     end
     
-    function camEntity.scroll(not_self, gesture)
+    function rig.scroll(not_self, gesture)
         local panMode = gesture.shift
         local zoomMode = gesture.alt
         
         if gesture.state == BEGAN then
-            if #camEntity.touches > 0 then return false end
+            if #rig.touches > 0 then return false end
             
-            camEntity.capturedScroll = true
-            camEntity.prev.zoom = camEntity.zoom
-            camEntity.prev.mid = gesture.location
+            rig.capturedScroll = true
+            rig.prev.zoom = rig.zoom
+            rig.prev.mid = gesture.location
             
             return true
         elseif gesture.state == MOVING then
             if panMode then
-                camEntity.pan(gesture.location - gesture.delta, gesture.location)            
+                rig.pan(gesture.location - gesture.delta, gesture.location)            
             elseif zoomMode then
-                camEntity.zoom = camEntity.clampZoom(camEntity.prev.zoom + (gesture.location - camEntity.prev.mid).y * camEntity.sensitivity)
+                rig.zoom = rig.clampZoom(rig.prev.zoom + (gesture.location - rig.prev.mid).y * rig.sensitivity)
             else
-                camEntity.rotate(gesture.delta.x, gesture.delta.y)
+                rig.rotate(gesture.delta.x, gesture.delta.y)
             end
-            camEntity.prevGestureDelta = gesture.delta
+            rig.prevGestureDelta = gesture.delta
         elseif gesture.state == ENDED or gesture.state == CANCELLED then
-            camEntity.capturedScroll = false
+            rig.capturedScroll = false
             
             if not panMode and not zoomMode then
-                local delta = camEntity.prevGestureDelta
-                camEntity.mx = -delta.y / DeltaTime * camEntity.sensitivity
-                camEntity.my = -delta.x / DeltaTime * camEntity.sensitivity        
+                local delta = rig.prevGestureDelta
+                rig.mx = -delta.y / DeltaTime * rig.sensitivity
+                rig.my = -delta.x / DeltaTime * rig.sensitivity        
             end
         end
     end
     
     function camEntity.update()
-        if #camEntity.touches == 0 and not camEntity.capturedScroll then
+        if #rig.touches == 0 and not rig.capturedScroll then
             -- Apply momentum from previous swipe
-            camEntity.rx = camEntity.rx + camEntity.mx * DeltaTime
-            camEntity.ry = camEntity.ry + camEntity.my * DeltaTime
-            camEntity.mx = camEntity.mx * 0.9
-            camEntity.my = camEntity.my * 0.9 
+            rig.rx = rig.rx + rig.mx * DeltaTime
+            rig.ry = rig.ry + rig.my * DeltaTime
+            rig.mx = rig.mx * 0.9
+            rig.my = rig.my * 0.9 
             
             -- If zooming past min or max interpolate back to limits
-            if camEntity.zoom > camEntity.maxZoom then
-                local overshoot = camEntity.zoom - camEntity.maxZoom
+            if rig.zoom > rig.maxZoom then
+                local overshoot = rig.zoom - rig.maxZoom
                 overshoot = overshoot * 0.9
-                camEntity.zoom = camEntity.maxZoom + overshoot
-            elseif camEntity.zoom < camEntity.minZoom then
-                local overshoot = camEntity.minZoom - camEntity.zoom
+                rig.zoom = rig.maxZoom + overshoot
+            elseif rig.zoom < rig.minZoom then
+                local overshoot = rig.minZoom - rig.zoom
                 overshoot = overshoot * 0.9
-                camEntity.zoom = camEntity.minZoom - overshoot
+                rig.zoom = rig.minZoom - overshoot
             end
             
-        elseif #camEntity.touches == 2 then
-            camEntity.position = camEntity.prev.target - camEntity.forward * camEntity.zoom
+        elseif #rig.touches == 2 then
+            camEntity.position = rig.prev.target - camEntity.forward * rig.zoom
             
-            local mid = camEntity.pinchMid()  
-            local dist = camEntity.pinchDist()
+            local mid = rig.pinchMid()  
+            local dist = rig.pinchDist()
             
-            local p1 = camEntity.project(camEntity.prev.mid, camEntity.zoom)  
-            local p2 = camEntity.project(mid, camEntity.zoom)
+            local p1 = rig.project(rig.prev.mid, rig.zoom)  
+            local p2 = rig.project(mid, rig.zoom)
             
-            camEntity.target = camEntity.prev.target + (p1-p2)  
-            camEntity.zoom = camEntity.clampZoom(camEntity.prev.zoom * (camEntity.prev.dist / dist))
+            rig.target = rig.prev.target + (p1-p2)  
+            rig.zoom = rig.clampZoom(rig.prev.zoom * (rig.prev.dist / dist))
         end  
         
         -- Clamp vertical rotation between -90 and 90 degrees (no upside down view)
-        camEntity.rx = math.min(math.max(camEntity.rx, -90), 90)
+        rig.rx = math.min(math.max(rig.rx, -90), 90)
         
         -- Calculate the camera's position and rotation
         --[[
         local rotation = quat.eulerAngles(self.rx,  self.ry, 0)
         self.entity.rotation = rotation
     ]]
-camEntity.camRxRy(camEntity.rx, camEntity.ry)
-local t = vec3(camEntity.target.x, camEntity.target.y, camEntity.target.z)
+rig.camRxRy(rig.rx, rig.ry)
+local t = vec3(rig.target.x, rig.target.y, rig.target.z)
 --self.entity.position = t + self.entity.forward * -self.zoom
 --not sure how above translates to this paradigm...
-camEntity.position = t + camEntity.forward * -camEntity.zoom
+camEntity.position = t + camEntity.forward * -rig.zoom
 end
 
 function camEntity.touched(not_self, touch)
 if touch.tapCount == 2 then
-    camEntity.target = camEntity.origin
+    rig.target = rig.origin
 end
 
-if camEntity.capturedScroll then return false end
+if rig.capturedScroll then return false end
 
 -- Allow a maximum of 2 touches
-if touch.state == BEGAN and #camEntity.touches < 2 then
-    table.insert(camEntity.touches, touch)
-    if #camEntity.touches == 2 then
-        camEntity.prev.target = vec3(camEntity.target:unpack())
-        camEntity.prev.mid = camEntity.pinchMid()
-        camEntity.prev.dist = camEntity.pinchDist()
-        camEntity.prev.zoom = camEntity.zoom
-        camEntity.mx = 0
-        camEntity.my = 0
+        if touch.state == BEGAN and #rig.touches < 2 then
+    table.insert(rig.touches, touch)
+    if #rig.touches == 2 then
+        rig.prev.target = vec3(rig.target:unpack())
+                rig.prev.mid = rig.pinchMid()
+        rig.prev.dist = rig.pinchDist()
+        rig.prev.zoom = rig.zoom
+        rig.mx = 0
+        rig.my = 0
     end        
     return true
     -- Cache updated touches
 elseif touch.state == MOVING then
-    for i = 1,#camEntity.touches do
-        if camEntity.touches[i].id == touch.id then
-            camEntity.touches[i] = touch
+    for i = 1,#rig.touches do
+        if rig.touches[i].id == touch.id then
+            rig.touches[i] = touch
         end
     end
     -- Remove old touches
 elseif touch.state == ENDED or touch.state == CANCELLED then
-    for i = #camEntity.touches,1,-1 do
-        if camEntity.touches[i].id == touch.id then
-            table.remove(camEntity.touches, i)
+    for i = #rig.touches,1,-1 do
+        if rig.touches[i].id == touch.id then
+            table.remove(rig.touches, i)
             break
         end
     end
     
-    if #camEntity.touches == 1 then
-        camEntity.mx = 0
-        camEntity.my = 0
+    if #rig.touches == 1 then
+        rig.mx = 0
+        rig.my = 0
     end
 end
 
 -- When all touches are finished apply momentum if moving fast enough
-if #camEntity.touches == 0 then
-    camEntity.mx = -touch.deltaY / DeltaTime * camEntity.sensitivity
-    camEntity.my = -touch.deltaX / DeltaTime * camEntity.sensitivity
-    if math.abs(camEntity.mx) < 70 then 
-        camEntity.mx = 0
+if #rig.touches == 0 then
+    rig.mx = -touch.deltaY / DeltaTime * rig.sensitivity
+    rig.my = -touch.deltaX / DeltaTime * rig.sensitivity
+    if math.abs(rig.mx) < 70 then 
+        rig.mx = 0
     end
-    if math.abs(camEntity.my) < 70 then 
-        camEntity.my = 0
+    if math.abs(rig.my) < 70 then 
+        rig.my = 0
     end
     -- When only one touch is active simply rotate the camera
-elseif #camEntity.touches == 1 then
-    camEntity.rotate(touch.deltaX, touch.deltaY)
+elseif #rig.touches == 1 then
+    rig.rotate(touch.deltaX, touch.deltaY)
 end
 
 return false

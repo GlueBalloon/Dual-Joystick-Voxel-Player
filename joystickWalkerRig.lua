@@ -3,7 +3,7 @@
 function joystickWalkerRig(entity, scene, blockCharacterAsset)
     --give the entity a rigidbody capsule rig
     --which DOES NOT INCLUDE a camera
-    entity = rigidCapsuleRig(entity, scene)
+    entity = rigidCapsuleRig(entity, scene, true)
     rig = entity.rig
     rig.contollerYInputAllowed = false
     rig.rb.linearDamping = 0.97

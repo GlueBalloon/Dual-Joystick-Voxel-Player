@@ -7,7 +7,7 @@
 -- Attach to a camera's entity for basic first person controls:
 -- i.e. scene.camera:add(FirstPersonViewer)
 -----------------------------------------
-
+--[[
 FPSWalkerViewer = class()
 
 local IDLE = 1
@@ -73,7 +73,7 @@ function FPSWalkerViewer:update()
         local rotation = quat.eulerAngles(self.rx,  self.ry, 0)
         self.camera.rotation = rotation
     end
-    ]]
+    ] ]
     for _, stick in ipairs(self.joysticks) do
         for _, outputTable in ipairs(self.outputs) do
             if outputTable.left and stick.type == "leftStick" then
@@ -336,3 +336,4 @@ function VoxelWalker:jump()
     v.y = self.jumpForce
     self.rb.linearVelocity = v
 end
+]]

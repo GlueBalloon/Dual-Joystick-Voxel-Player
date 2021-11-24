@@ -8,20 +8,25 @@ function setup()
     
     makeGround()
     
-    
-    --make a player body controlled by joysticks, with separate camera entity
-    --its camera is initially placed inside the body for a first-person view
+    --make a player body controlled by joysticks
     playerBody = joystickWalkerRig(scene:entity(), scene, asset.builtin.Blocky_Characters.Soldier)
     playerBody.position = vec3(46.5, 20, 46.5)
     
+    --it contains a separate camera entity put inside the body 
+    --for a first-person view
+    --here it is repositioned to start with a third-person view
+    playerBody.rig.joystickView.position = vec3(0, 4.5, -7)
+    playerBody.rig.joystickView.rig.camRxRy(30, 0)
+    
     --a control to switch between first and third person views
-    parameter.boolean("thirdPersonView", false, function(shouldBe3rdPerson)      
-        if shouldBe3rdPerson then
+    parameter.boolean("rigidbodyIsCameraParent", true, function(shouldBeParent)      
+        if shouldBeParent then
+            playerBody.rig.joystickView.parent = playerBody 
             playerBody.rig.joystickView.position = vec3(0, 4.5, -7)
-            playerBody.rig.joystickView.rx = 25
+            playerBody.rig.joystickView.rig.camRxRy(30, 0)
         else
-            playerBody.rig.joystickView.position = vec3(0, 0.85, 0) 
-            playerBody.rig.joystickView.rx = 0          
+            playerBody.rig.joystickView.position = playerBody.rig.joystickView.worldPosition
+            playerBody.rig.joystickView.parent = nil 
         end
     end)
 end

@@ -1,4 +1,4 @@
--- Dual-Joystick Voxel Player
+-- Joystick Player
 
 viewer.mode = OVERLAY
 
@@ -15,19 +15,11 @@ function setup()
     --it contains a separate camera entity put inside the body 
     --for a first-person view
     --here it is repositioned to start with a third-person view
-    playerBody.rig.joystickView.position = vec3(0, 4.5, -7)
-    playerBody.rig.joystickView.rig.camRxRy(30, 0)
+    playerBody.rig.isThirdPersonView = true
     
     --a control to switch between first and third person views
-    parameter.boolean("rigidbodyIsCameraParent", true, function(shouldBeParent)      
-        if shouldBeParent then
-            playerBody.rig.joystickView.parent = playerBody 
-            playerBody.rig.joystickView.position = vec3(0, 4.5, -7)
-            playerBody.rig.joystickView.rig.camRxRy(30, 0)
-        else
-            playerBody.rig.joystickView.position = playerBody.rig.joystickView.worldPosition
-            playerBody.rig.joystickView.parent = nil 
-        end
+    parameter.boolean("thirdPersonView", true, function(useThirdPerson) 
+        playerBody.rig.isThirdPersonView = useThirdPerson
     end)
 end
 

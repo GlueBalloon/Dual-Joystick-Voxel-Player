@@ -274,70 +274,70 @@ function orbitViewerRig(camEntity)
         --[[
         local rotation = quat.eulerAngles(self.rx,  self.ry, 0)
         self.entity.rotation = rotation
-    ]]
-rig.camRxRy(rig.rx, rig.ry)
-local t = vec3(rig.target.x, rig.target.y, rig.target.z)
---self.entity.position = t + self.entity.forward * -self.zoom
---not sure how above translates to this paradigm...
-camEntity.position = t + camEntity.forward * -rig.zoom
-end
-
-function camEntity.touched(not_self, touch)
-if touch.tapCount == 2 then
-    rig.target = rig.origin
-end
-
-if rig.capturedScroll then return false end
-
--- Allow a maximum of 2 touches
-        if touch.state == BEGAN and #rig.touches < 2 then
-    table.insert(rig.touches, touch)
-    if #rig.touches == 2 then
-        rig.prev.target = vec3(rig.target:unpack())
-                rig.prev.mid = rig.pinchMid()
-        rig.prev.dist = rig.pinchDist()
-        rig.prev.zoom = rig.zoom
-        rig.mx = 0
-        rig.my = 0
-    end        
-    return true
-    -- Cache updated touches
-elseif touch.state == MOVING then
-    for i = 1,#rig.touches do
-        if rig.touches[i].id == touch.id then
-            rig.touches[i] = touch
-        end
-    end
-    -- Remove old touches
-elseif touch.state == ENDED or touch.state == CANCELLED then
-    for i = #rig.touches,1,-1 do
-        if rig.touches[i].id == touch.id then
-            table.remove(rig.touches, i)
-            break
-        end
+        ]]
+        rig.camRxRy(rig.rx, rig.ry)
+        local t = vec3(rig.target.x, rig.target.y, rig.target.z)
+        --self.entity.position = t + self.entity.forward * -self.zoom
+        --not sure how above translates to this paradigm...
+        camEntity.position = t + camEntity.forward * -rig.zoom
     end
     
-    if #rig.touches == 1 then
-        rig.mx = 0
-        rig.my = 0
+    function camEntity.touched(not_self, touch)
+        if touch.tapCount == 2 then
+            rig.target = rig.origin
+        end
+        
+        if rig.capturedScroll then return false end
+        
+        -- Allow a maximum of 2 touches
+        if touch.state == BEGAN and #rig.touches < 2 then
+            table.insert(rig.touches, touch)
+            if #rig.touches == 2 then
+                rig.prev.target = vec3(rig.target:unpack())
+                rig.prev.mid = rig.pinchMid()
+                rig.prev.dist = rig.pinchDist()
+                rig.prev.zoom = rig.zoom
+                rig.mx = 0
+                rig.my = 0
+            end        
+            return true
+            -- Cache updated touches
+        elseif touch.state == MOVING then
+            for i = 1,#rig.touches do
+                if rig.touches[i].id == touch.id then
+                    rig.touches[i] = touch
+                end
+            end
+            -- Remove old touches
+        elseif touch.state == ENDED or touch.state == CANCELLED then
+            for i = #rig.touches,1,-1 do
+                if rig.touches[i].id == touch.id then
+                    table.remove(rig.touches, i)
+                    break
+                end
+            end
+            
+            if #rig.touches == 1 then
+                rig.mx = 0
+                rig.my = 0
+            end
+        end
+        
+        -- When all touches are finished apply momentum if moving fast enough
+        if #rig.touches == 0 then
+            rig.mx = -touch.deltaY / DeltaTime * rig.sensitivity
+            rig.my = -touch.deltaX / DeltaTime * rig.sensitivity
+            if math.abs(rig.mx) < 70 then 
+                rig.mx = 0
+            end
+            if math.abs(rig.my) < 70 then 
+                rig.my = 0
+            end
+            -- When only one touch is active simply rotate the camera
+        elseif #rig.touches == 1 then
+            rig.rotate(touch.deltaX, touch.deltaY)
+        end
+        
+        return false
     end
-end
-
--- When all touches are finished apply momentum if moving fast enough
-if #rig.touches == 0 then
-    rig.mx = -touch.deltaY / DeltaTime * rig.sensitivity
-    rig.my = -touch.deltaX / DeltaTime * rig.sensitivity
-    if math.abs(rig.mx) < 70 then 
-        rig.mx = 0
-    end
-    if math.abs(rig.my) < 70 then 
-        rig.my = 0
-    end
-    -- When only one touch is active simply rotate the camera
-elseif #rig.touches == 1 then
-    rig.rotate(touch.deltaX, touch.deltaY)
-end
-
-return false
-end
 end

@@ -3,7 +3,7 @@
 function joystickWalkerRig(entity, scene, blockCharacterAsset)
     --give the entity a rigidbody capsule rig
     --which DOES NOT INCLUDE a camera
-    entity = rigidCapsuleRig(entity, scene, true)
+    entity = rigidCapsuleRig(entity, scene)
     rig = entity.rig
     rig.contollerYInputAllowed = false
     rig.rb.linearDamping = 0.97
@@ -23,19 +23,24 @@ function joystickWalkerRig(entity, scene, blockCharacterAsset)
     --THIS IS THE ACTUAL CAMERA
     rig.joystickView = makeCameraViewerEntityThing(scene)
     rig.joystickView = doubleJoystickRig(rig.joystickView)
-    rig.joystickView.position = vec3(0, 0.95, 0)
+    rig.headPosition = vec3(0, 0.95, 0)
     rig.joystickView.parent = entity
+    rig.isThirdPersonView = false
     
-    --merge the draw and update functions of the entity and the 
-    --joystick entity. 'Draw' is easy because the entity doesn't have its own 
-    --draw function, but the entity does have its own update function, so 
-    --that has to be combined with the camera update function
-    entity.draw = rig.joystickView.draw
-    entity.touched = rig.joystickView.touched
-    local ceUpdate, jvUpdate = entity.update, rig.joystickView.update
-    entity.update = function()
-        ceUpdate()
-        jvUpdate()
+    --a function to align the camera and body if in third-person view
+    function orientCamera()
+        if rig.isThirdPersonView then
+            local jView = rig.joystickView
+            local pointToOffsetFrom = vec3(0, 1.5, -0.25) --includes offset for back of head
+            local distanceMultiplier = 7
+            local newPosition = pointToOffsetFrom - jView.forward * distanceMultiplier
+            --at higher angles move camera closer to body
+            while newPosition.y < -0.9 do
+                distanceMultiplier = distanceMultiplier * 0.999
+                newPosition = pointToOffsetFrom - jView.forward * distanceMultiplier
+            end
+            jView.position = newPosition
+        end
     end
     
     --a function for the left joystick to control the rigidBody
@@ -53,11 +58,32 @@ function joystickWalkerRig(entity, scene, blockCharacterAsset)
         finalDir.x = math.min(finalDir.x or 2)
         finalDir.z = math.min(finalDir.z or 2)
         rig.move(finalDir)
+        --hopefully this eliminates model jittering
+        orientCamera()
     end
     
-    --assign that function to receive the left joystick output.
+    --assign the new joystick functions
     --(the joystickView is a separate entity with its own rig)
-    rig.joystickView.rig.setOutputReciever(moveCapsule)
+    rig.joystickView.rig.setOutputReciever(moveCapsule, orientCamera)
+    
+    --merge the draw and update functions of the entity and the 
+    --joystick entity. 'Draw' is easy because the entity doesn't have its own 
+    --draw function, but the entity does have its own update function, so 
+    --that has to be combined with the camera update function
+    entity.draw = rig.joystickView.draw
+    entity.touched = rig.joystickView.touched
+    local ceUpdate, jvUpdate = entity.update, rig.joystickView.update
+    entity.update = function()
+        ceUpdate()
+        jvUpdate()
+        --angle the body to keep back of head facing camera
+        rig.entityWithModel.eulerAngles = vec3(0,  rig.joystickView.rig.ry, 0)
+        if rig.isThirdPersonView and rig.joystickView.z == 0 then
+            orientCamera()
+        elseif (not rig.isThirdPersonView) and rig.joystickView.z ~= 0 then 
+            rig.joystickView.position = rig.headPosition
+        end
+    end
     
     --send back the entity
     --the structure created is:
@@ -65,8 +91,8 @@ function joystickWalkerRig(entity, scene, blockCharacterAsset)
         --a rigidbody (rig.rb) attached to the main entity
         --a separate entity with the visible model (rig.entityWithModel)
         --a separate entity with the joystick camera (rig.joystickView)
-    --both the visible model and the joystickView are children
-    --of the main entity
+    --both the visible model and the joystickView are children of the 
+    --main entity
     return entity
 end
 

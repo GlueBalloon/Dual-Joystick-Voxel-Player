@@ -6,7 +6,7 @@ function rigidCapsuleRig(anEntity, scene, shouldShowCapsule)
     local rig = anEntity.rig
     rig.GROUP = 1<<11
     rig.speed = 10
-    rig.maxForce = 20
+    rig.maxForce = 40
     rig.jumpForce = 5.5
     rig.rb = anEntity:add(craft.rigidbody, DYNAMIC, 1)
     rig.rb.angularFactor = vec3(0,0,0) -- disable rotation

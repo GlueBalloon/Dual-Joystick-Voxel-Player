@@ -1,6 +1,6 @@
 -- a rig that combines the joystick rig with the rigid capsule rig
 --and makes the left joystck control the capsule motion
-function joystickWalkerRig(entity, scene, blockCharacterAsset)
+function joystickWalkerRig(entity, scene, blockCharacterAsset, strokeColor1, strokeColor2)
     --give the entity a rigidbody capsule rig
     --which DOES NOT INCLUDE a camera
     entity = rigidCapsuleRig(entity, scene)
@@ -12,23 +12,33 @@ function joystickWalkerRig(entity, scene, blockCharacterAsset)
     --this can't be the model of the entity itself, because it
     --has to be able to scale separately from the rigid capsule
     rig.entityWithModel = scene:entity()
-    rig.entityWithModel.model = craft.model(blockCharacterAsset)
+    if blockCharacterAsset then
+        rig.entityWithModel.model = craft.model(blockCharacterAsset)
+    end
     rig.entityWithModel.position = vec3(0, -0.998, 0)
     rig.entityWithModel.scale = vec3(0.12485, 0.12485, 0.12485)
     rig.entityWithModel.parent = entity
-    scene.physics.gravity = vec3(0,-14.8,0)
+    scene.physics.gravity = vec3(0,-60.8,0) --was -14.8
     
     --make another new separate camEntity, give it a joystick camera rig,
     --and make it a child of the body, so it moves with the body
     --THIS IS THE ACTUAL CAMERA
     rig.joystickView = makeCameraViewerEntityThing(scene)
-    rig.joystickView = doubleJoystickRig(rig.joystickView)
+    rig.joystickView = doubleJoystickRig(rig.joystickView, strokeColor1, strokeColor2)
     rig.headPosition = vec3(0, 0.95, 0)
     rig.joystickView.parent = entity
     rig.isThirdPersonView = false
     
     --a function to align the camera and body if in third-person view
     function orientCamera()
+        --change the camera centering if needed 
+        if rig.isThirdPersonView and rig.joystickView.z == 0 then
+            rig.entityWithModel.active = true
+        elseif (not rig.isThirdPersonView) and rig.joystickView.z ~= 0 then 
+            rig.joystickView.position = rig.headPosition
+            rig.entityWithModel.active = false
+        end
+        --offset the camera if needed
         if rig.isThirdPersonView then
             local jView = rig.joystickView
             local pointToOffsetFrom = vec3(0, 1.5, -0.25) --includes offset for back of head
@@ -64,7 +74,7 @@ function joystickWalkerRig(entity, scene, blockCharacterAsset)
     
     --assign the new joystick functions
     --(the joystickView is a separate entity with its own rig)
-    rig.joystickView.rig.setOutputReciever(moveCapsule, orientCamera)
+    rig.joystickView.rig.setOutputReceiver(moveCapsule, orientCamera)
     
     --merge the draw and update functions of the entity and the 
     --joystick entity. 'Draw' is easy because the entity doesn't have its own 
@@ -72,16 +82,29 @@ function joystickWalkerRig(entity, scene, blockCharacterAsset)
     --that has to be combined with the camera update function
     entity.draw = rig.joystickView.draw
     entity.touched = rig.joystickView.touched
-    local ceUpdate, jvUpdate = entity.update, rig.joystickView.update
+    local rbUpdate, jvUpdate = entity.update, rig.joystickView.update
     entity.update = function()
-        ceUpdate()
+        rbUpdate()
         jvUpdate()
         --angle the body to keep back of head facing camera
         rig.entityWithModel.eulerAngles = vec3(0,  rig.joystickView.rig.ry, 0)
-        if rig.isThirdPersonView and rig.joystickView.z == 0 then
+        orientCamera()
+    end
+    
+    --an option to remove the rigidbody
+    rig.removeRigidbody = function()
+        entity:remove(craft.rigidbody)
+        rig.move = nil
+        rig.jump = nil
+        rig.rb = nil
+        for _, funcs in ipairs(rig.joystickView.rig.outputReceivers) do
+            if funcs.left == moveCapsule then
+                funcs.left = nil
+            end
+        end
+        entity.update = function() 
+            jvUpdate()
             orientCamera()
-        elseif (not rig.isThirdPersonView) and rig.joystickView.z ~= 0 then 
-            rig.joystickView.position = rig.headPosition
         end
     end
     
@@ -98,7 +121,7 @@ end
 
 --a rig that creates two joysticks and a camera
 --and sets the right joystick to control the camera
-function doubleJoystickRig(camEntity)
+function doubleJoystickRig(camEntity, strokeColor1, strokeColor2)
     if touches then 
         touches.removeHandler(camEntity) 
         touches.addHandler(camEntity, 0, true)
@@ -132,12 +155,12 @@ function doubleJoystickRig(camEntity)
         return setCameraRxRyFrom
     end
     
-    function rig.setOutputReciever(functionForLeftStick, functionForRightStick)
+    function rig.setOutputReceiver(functionForLeftStick, functionForRightStick)
         local outputTable = {left = functionForLeftStick, right = functionForRightStick}
         table.insert(rig.outputReceivers, outputTable)
     end
     
-    rig.setOutputReciever(nil, rig.defaultRightOutputReciever())
+    rig.setOutputReceiver(nil, rig.defaultRightOutputReciever())
     
     function rig.dpadStates(diagonalsAllowed)
         local rightStick = {left = false, right = false, up = false, down = false}
@@ -178,10 +201,10 @@ function doubleJoystickRig(camEntity)
             if #rig.joysticks < 2 then
                 if touch.x<WIDTH/2 then 
                     if #rig.joysticks == 0 or (rig.joysticks[1] and rig.joysticks[1].type ~= "leftStick") then 
-                        table.insert(rig.joysticks, Joystick(touch.x,touch.y,touch.id,"leftStick")) 
+                        table.insert(rig.joysticks, Joystick(touch.x,touch.y,touch.id,"leftStick", strokeColor1, strokeColor2)) 
                     end
                 elseif #rig.joysticks == 0 or (rig.joysticks[1] and rig.joysticks[1].type ~= "rightStick") then
-                    table.insert(rig.joysticks,Joystick(touch.x,touch.y,touch.id,"rightStick")) 
+                    table.insert(rig.joysticks,Joystick(touch.x,touch.y,touch.id,"rightStick", strokeColor1, strokeColor2)) 
                 end
             end
         elseif touch.state == ENDED or touch.state == CANCELLED then

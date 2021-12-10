@@ -2,24 +2,20 @@
 
 viewer.mode = OVERLAY
 
-function setup()
-    
-    scene = craft.scene()
-    
+function setup()    
+    --setup the scene
+    scene = craft.scene()   
     makeGround()
     
     --make a player body controlled by joysticks
-    playerBody = joystickWalkerRig(scene:entity(), scene, asset.builtin.Blocky_Characters.Soldier)
-    playerBody.position = vec3(46.5, 20, 46.5)
-    
     --it contains a separate camera entity put inside the body 
-    --for a first-person view
-    --here it is repositioned to start with a third-person view
+    playerBody = joystickWalkerRig(scene:entity(), scene, asset.builtin.Blocky_Characters.Soldier)
+    playerBody.position = vec3(46.5, 40, 46.5)
     playerBody.rig.isThirdPersonView = true
     
     --a control to switch between first and third person views
-    parameter.boolean("thirdPersonView", true, function(useThirdPerson) 
-        playerBody.rig.isThirdPersonView = useThirdPerson
+    parameter.boolean("thirdPersonView", true, function(value) 
+        playerBody.rig.isThirdPersonView = value
     end)
 end
 
@@ -52,27 +48,34 @@ function draw()
     scene:draw()
     playerBody.draw()    
     --change boolean to see live updates of simulated dpads
-    if false then
-        generateTwoStickDpadReport(playerBody.joystickView)
+    if true then
+        pushStyle()
+        local report = generateTwoStickDpadReport(playerBody.rig.joystickView) or ""
+        fontSize(14)
+        local w, h = textSize(report)
+        fill(255, 200, 0)
+        textMode(CORNER)
+        text(report, WIDTH - (w * 1.15), HEIGHT - (h * 1.05) )
+        popStyle()
     end
 end
 
+--functions to check the dpad-simulating outputs
 function generateTwoStickDpadReport(player)
-    if #player.joysticks > 0 then
-        local dpads = player.dpadStates()
-        local diags = player.dpadStates(true)
-        print(
-        "\n**no diagonals allowed: "..
-        "\n-------left stick:\n"
+    local rig = player.rig
+    if #rig.joysticks > 0 then
+        local dpads = rig.dpadStates()
+        local diags = rig.dpadStates(true)
+        return
+        "DPAD OUTPUTS:"
+        .."\n\nLEFT stick:\n"
         ..dpadTableReport(dpads.leftStick)
-        .."\n-------right stick:\n"
-        ..dpadTableReport(dpads.rightStick)
-        .."\n\n**diagonals allowed: "
-        .."\n-------left stick:\n"
+        .."\nif diagonals allowed:\n"
         ..dpadTableReport(diags.leftStick)
-        .."\n-------right stick:\n"
+        .."\n\nRIGHT stick:\n"
+        ..dpadTableReport(dpads.rightStick)
+        .."\nif diagonals allowed:\n"
         ..dpadTableReport(diags.rightStick)
-        )
     end
 end
 
@@ -91,8 +94,8 @@ end
 
 function dpadTableReport(dpadTable)
     return 
-    "left: "..tostring(dpadTable.left)
-    .."\nright: "..tostring(dpadTable.right)
-    .."\nup: "..tostring(dpadTable.up)
-    .."\ndown: "..tostring(dpadTable.down)
+    "\tleft: "..tostring(dpadTable.left)
+    .."\n\tright: "..tostring(dpadTable.right)
+    .."\n\tup: "..tostring(dpadTable.up)
+    .."\n\tdown: "..tostring(dpadTable.down)
 end

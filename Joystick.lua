@@ -42,7 +42,7 @@ end
 
 --returns table with booleans for the state of left, right, up, and down buttons
 function Joystick:activatedDpadDirections(diagonalsAllowed)
-    --note: angle 0 points right, 90 points up, -90 points down --127 is left *and* up on no diags
+    --note: angle 0 points right, 90 points up, -90 points down
     local padState = {left = false, right = false, up = false, down = false}
     local angle = self:angle()
     --ignore stick position if it's basically centered
@@ -80,7 +80,13 @@ function Joystick:activatedDpadDirections(diagonalsAllowed)
     end
     return padState
 end
-    
+
+function Joystick:dpadButtonsIfCameraRotated(angle, cameraAngle, diagonalsAllowed)
+    --note: angle 0 points right, 90 points up, -90 points down
+    local padState = {left = false, right = false, up = false, down = false}
+    local angle = self:angle()
+end
+
 function Joystick:touched(t)
     if t.id == self.touchID then
         self.touchX = t.x
